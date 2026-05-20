@@ -6,19 +6,18 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        // This keeps the app's root screen simple: show the feed first.
+        FeedView()
     }
 }
 
 #Preview {
     ContentView()
+        // Previews do not automatically get the app's database container.
+        // inMemory keeps preview data temporary so it does not affect the real app.
+        .modelContainer(for: ProgressEntry.self, inMemory: true)
 }

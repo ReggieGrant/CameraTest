@@ -1,0 +1,204 @@
+CameraTest Beginner Notes
+
+This document explains the main pieces of the app in beginner-friendly terms.
+
+APP STARTUP
+
+CameraTestApp.swift
+
+CameraTestApp is the starting point of the app because it uses @main.
+
+The app opens ContentView() inside a WindowGroup. A WindowGroup is the main window or scene that SwiftUI shows when the app launches.
+
+The app also adds:
+
+.modelContainer(for: ProgressEntry.self)
+
+This creates the SwiftData database container for ProgressEntry. Any child view can use SwiftData through modelContext after this is attached.
+
+ContentView.swift
+
+ContentView is kept simple. It shows FeedView() as the first real screen of the app.
+
+The preview uses an in-memory SwiftData container:
+
+.modelContainer(for: ProgressEntry.self, inMemory: true)
+
+inMemory: true means preview data is temporary and does not affect the real app data.
+
+DATA MODEL
+
+ProgressEntry.swift
+
+ProgressEntry is marked with @Model, which tells SwiftData that this class should be saved in the app database.
+
+Each ProgressEntry stores:
+
+- id: a unique identifier for the entry
+- createdAt: the date the entry was created
+- note: optional user text
+- beforeImage: the file name for the before photo
+- afterImage: the file name for the after photo
+
+The app saves image file names in SwiftData, not the full images. The actual photos are saved separately as files.
+
+FEED SCREEN
+
+FeedView.swift
+
+FeedView shows the list of saved progress entries.
+
+@Environment(\.modelContext) private var modelContext
+
+modelContext is SwiftData's tool for inserting, deleting, and saving data.
+
+@Query(sort: \ProgressEntry.createdAt, order: .reverse)
+private var entries: [ProgressEntry] = []
+
+@Query automatically loads ProgressEntry objects from SwiftData. Sorting by createdAt in reverse order puts the newest entries at the top.
+
+NavigationStack allows the app to move from the feed to other screens, like the detail screen or add-entry screen.
+
+List displays rows. ForEach(entries) creates one row for each saved entry.
+
+Each row uses NavigationLink so tapping it opens EntryDetailView.
+
+The feed tries to load the before photo using ImageFileStore. If the image file is missing, the app shows a placeholder shape instead.
+
+The delete function removes both image files and the SwiftData entry:
+
+imageStore.deleteIMG(fileName: entry.beforeImage)
+imageStore.deleteIMG(fileName: entry.afterImage)
+modelContext.delete(entry)
+try? modelContext.save()
+
+The preview creates a temporary SwiftData container so the preview can render correctly in Xcode.
+
+ADD ENTRY SCREEN
+
+AddEntryView.swift
+
+AddEntryView is the screen where the user chooses or takes before and after photos.
+
+Important properties:
+
+- modelContext: saves the new entry into SwiftData
+- dismiss: closes the add screen after saving
+- vm: the view model that holds the form state and save logic
+- beforePickerItem and afterPickerItem: selected Photos picker items
+- showBeforeCamera and showAfterCamera: control whether the camera sheet is shown
+
+PhotosPicker lets the user choose images from the photo library.
+
+CameraPicker lets the user take a new photo with the camera.
+
+The photoBox(image:) helper shows either the selected image or a placeholder message.
+
+The save button calls:
+
+vm.save(modelContext: modelContext)
+
+If saving succeeds, the view calls dismiss() to return to the feed.
+
+ADD ENTRY LOGIC
+
+AddEntryViewModel.swift
+
+AddEntryViewModel is marked with @MainActor, which keeps UI-related changes on the main thread.
+
+It conforms to ObservableObject, which lets SwiftUI watch it for changes.
+
+Properties marked with @Published refresh the UI when they change:
+
+- note
+- beforeImage
+- afterImage
+- errorMessage
+- showError
+
+setBeforePickerItem and setAfterPickerItem receive a selected PhotosPickerItem and convert it into a UIImage.
+
+loadUIImage uses async loading because reading photo data can take time.
+
+canSave() returns true only when both before and after images exist.
+
+save(modelContext:) does four main things:
+
+1. Makes sure both images exist.
+2. Saves both images to files using ImageFileStore.
+3. Creates a new ProgressEntry with the image file names.
+4. Inserts and saves the entry with SwiftData.
+
+IMAGE STORAGE
+
+ImageFileStore.swift
+
+ImageFileStore handles saving, loading, and deleting image files.
+
+SwiftData stores text, dates, and file names. The larger image data is saved in the app's Documents folder.
+
+makeFileName creates names like:
+
+UUID_before.jpg
+UUID_after.jpg
+
+saveIMG converts a UIImage into JPEG data and writes it to disk.
+
+loadIMG reads image data from disk and turns it back into a UIImage.
+
+deleteIMG removes an image file from disk.
+
+docURL() finds the app's Documents directory.
+
+folderURL() creates a folder path inside Documents for this app's saved images.
+
+fileURL(fileName:) creates the full path for one saved image file.
+
+CAMERA WRAPPER
+
+CameraPicker.swift
+
+UIImagePickerController is a UIKit camera screen. SwiftUI cannot show it directly, so the app wraps it in UIViewControllerRepresentable.
+
+makeUIViewController creates and configures the camera picker.
+
+updateUIViewController is required by the protocol, but it is empty because this camera screen does not need live updates after it appears.
+
+The Coordinator receives UIKit delegate callbacks.
+
+When the user takes a photo, this method receives it:
+
+imagePickerController(_:didFinishPickingMediaWithInfo:)
+
+The picked image is passed back to SwiftUI using the onImagePicked closure.
+
+If the user cancels, the camera sheet is dismissed.
+
+DETAIL SCREEN
+
+EntryDetailView.swift
+
+EntryDetailView shows one saved progress entry.
+
+It receives the selected entry from FeedView:
+
+let entry: ProgressEntry
+
+It uses ImageFileStore to load the saved before and after image files.
+
+The photoBox(fileName:) helper tries to show the image. If the file cannot be found, it shows Image not found.
+
+The note section only appears when the entry has a note.
+
+OVERALL APP FLOW
+
+1. The app starts in CameraTestApp.
+2. ContentView shows FeedView.
+3. FeedView loads saved entries from SwiftData with @Query.
+4. The user taps Add to open AddEntryView.
+5. The user chooses or takes before and after photos.
+6. AddEntryViewModel saves the photos as files.
+7. AddEntryViewModel saves a ProgressEntry in SwiftData.
+8. FeedView automatically updates because @Query watches the saved data.
+9. The user taps an entry to see details in EntryDetailView.
+10. The user can swipe to delete an entry, which removes both the SwiftData record and the image files.

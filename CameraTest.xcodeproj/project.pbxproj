@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		14D210FC2FBD3A2B00E72090 /* BeginnerNotes.md in Resources */ = {isa = PBXBuildFile; fileRef = 14D210FB2FBD3A2B00E72090 /* BeginnerNotes.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		14D210D32FBD331500E72090 /* CameraTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CameraTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		14D210FB2FBD3A2B00E72090 /* BeginnerNotes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BeginnerNotes.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -34,6 +39,7 @@
 			children = (
 				14D210D52FBD331500E72090 /* CameraTest */,
 				14D210D42FBD331500E72090 /* Products */,
+				14D210FB2FBD3A2B00E72090 /* BeginnerNotes.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -109,6 +115,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				14D210FC2FBD3A2B00E72090 /* BeginnerNotes.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
